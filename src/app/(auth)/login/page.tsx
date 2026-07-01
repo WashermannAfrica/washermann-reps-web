@@ -65,7 +65,7 @@ function LoginForm() {
     <AuthBody>
       <AuthHeading
         line1="Welcome back"
-        line2="Sales Rep"
+        line2="Rep"
         subtitle="Sign in to track your referrals and earnings."
       />
 
@@ -103,7 +103,8 @@ function LoginForm() {
 
       <p className="mt-8 text-center text-sm text-body">
         New here? Apply on the{' '}
-        <a href="https://www.washermann.com/#who" className="font-semibold text-primary hover:underline">
+        {/* use NEXT_PUBLIC_LANDING_PAGE_URL from env; fallback to '#' if not provided */}
+        <a href={process.env.NEXT_PUBLIC_LANDING_PAGE_URL ?? '#'} className="font-semibold text-primary hover:underline">
           Washermann site
         </a>
         .
