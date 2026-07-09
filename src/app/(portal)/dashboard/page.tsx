@@ -12,7 +12,9 @@ import { Input } from '@/components/ui/Input';
 import { formatNaira, formatDate, statusTone, titleCase } from '@/lib/utils';
 import type { ApiResponse, Dashboard } from '@/types';
 
-const APPLY_BASE = 'https://www.washermann.com';
+// Referrals point vendors to the vendor registration portal. The rep's code is
+// appended as ?ref= and the vendor signup form auto-fills it.
+const VENDOR_URL = (process.env.NEXT_PUBLIC_VENDOR_URL ?? 'https://vendor.washermann.com').replace(/\/+$/, '');
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -20,6 +22,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [payoutOpen, setPayoutOpen] = useState(false);
 
   const load = useCallback(() => {
@@ -53,7 +56,7 @@ export default function DashboardPage() {
 
   const { referral, payouts } = data;
   const code = referral.code ?? '—';
-  const shareLink = `${APPLY_BASE}/?ref=${referral.code ?? ''}`;
+  const shareLink = referral.code ? `${VENDOR_URL}/signup?ref=${referral.code}` : '';
   const available = referral.payout.available;
   const hasOpenPayout = payouts.some((p) => p.status === 'pending' || p.status === 'processing');
 
@@ -62,6 +65,17 @@ export default function DashboardPage() {
       await navigator.clipboard.writeText(referral.code ?? '');
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  }
+
+  async function copyLink() {
+    if (!shareLink) return;
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 1500);
     } catch {
       /* clipboard unavailable */
     }
@@ -87,9 +101,21 @@ export default function DashboardPage() {
             {copied ? 'Copied' : 'Copy'}
           </button>
         </div>
-        <div className="mt-4 flex items-center gap-2 text-sm text-white/70">
-          <Share2 size={15} />
-          <span className="truncate">{shareLink}</span>
+        <div className="mt-4">
+          <p className="mb-1.5 flex items-center gap-1.5 text-xs text-mint/70">
+            <Share2 size={14} /> Your vendor sign-up link — share it; the code fills in automatically
+          </p>
+          <div className="flex items-center gap-2 rounded-2xl bg-white/10 p-1.5 pl-3">
+            <span className="min-w-0 flex-1 truncate text-sm text-white/90">{shareLink || '—'}</span>
+            <button
+              onClick={copyLink}
+              disabled={!shareLink}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-mint px-3 py-1.5 text-sm font-semibold text-forest-deep hover:bg-mint/90 disabled:opacity-50"
+            >
+              {linkCopied ? <Check size={15} /> : <Copy size={15} />}
+              {linkCopied ? 'Copied' : 'Copy link'}
+            </button>
+          </div>
         </div>
       </div>
 
