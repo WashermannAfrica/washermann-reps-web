@@ -65,7 +65,7 @@ function LoginForm() {
     <AuthBody>
       <AuthHeading
         line1="Welcome back"
-        line2="Sales Rep"
+        line2="Rep"
         subtitle="Sign in to track your referrals and earnings."
       />
 
@@ -103,7 +103,12 @@ function LoginForm() {
 
       <p className="mt-8 text-center text-sm text-body">
         New here? Apply on the{' '}
-        <a href="https://www.washermann.com/#who" className="font-semibold text-primary hover:underline">
+        {/* Deep-links to the landing's "Who it's for" section with the Sales Rep
+            application form auto-opened (WhoItsFor reads ?apply=sales-rep). */}
+        <a
+          href={`${(process.env.NEXT_PUBLIC_LANDING_PAGE_URL ?? 'https://www.washermann.com').replace(/\/+$/, '')}/?apply=sales-rep#who`}
+          className="font-semibold text-primary hover:underline"
+        >
           Washermann site
         </a>
         .
