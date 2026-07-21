@@ -48,7 +48,7 @@ function LoginForm() {
       const { user, accessToken, refreshToken } = data.data;
 
       if (!user.roles?.includes(SALES_REP_ROLE)) {
-        setError('This account is not a Washermann Sales Rep.');
+        setError('This account is not a Washermann Rep.');
         return;
       }
 

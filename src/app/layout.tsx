@@ -10,7 +10,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Washermann Sales Rep',
+  title: 'Washermann Rep',
   description: 'Refer customers and vendors to Washermann and earn cash.',
 };
 
