@@ -239,8 +239,18 @@ function PayoutModal({
   const [bankCode, setBankCode] = useState(defaults.bankCode ?? '');
   const [accountNumber, setAccountNumber] = useState(defaults.accountNumber ?? '');
   const [accountName, setAccountName] = useState(defaults.accountName ?? '');
+  const [banks, setBanks] = useState<{ name: string; code: string }[]>([]);
+  const [banksLoading, setBanksLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    api
+      .get<{ data: { name: string; code: string }[] }>('/payments/banks')
+      .then((res) => setBanks(Array.isArray(res.data.data) ? res.data.data : []))
+      .catch(() => setBanks([]))
+      .finally(() => setBanksLoading(false));
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -276,13 +286,28 @@ function PayoutModal({
         </p>
 
         <form onSubmit={submit} className="mt-5 flex flex-col gap-4">
-          <Input
-            label="Bank code"
-            required
-            placeholder="e.g. 044"
-            value={bankCode}
-            onChange={(e) => setBankCode(e.target.value)}
-          />
+          <div className="flex flex-col gap-2">
+            <label htmlFor="bank" className="text-sm font-semibold text-ink">
+              Bank <span className="text-danger">*</span>
+            </label>
+            <select
+              id="bank"
+              required
+              value={bankCode}
+              onChange={(e) => setBankCode(e.target.value)}
+              disabled={banksLoading}
+              className="h-12 w-full rounded-full bg-section px-5 text-sm text-ink transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
+            >
+              <option value="" disabled>
+                {banksLoading ? 'Loading banks…' : 'Select your bank'}
+              </option>
+              {banks.map((b) => (
+                <option key={b.code} value={b.code}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <Input
             label="Account number"
             required
