@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Copy, Check, Share2, Banknote, Users, Store } from 'lucide-react';
 import { api, apiErrorMessage } from '@/lib/api';
@@ -227,6 +227,85 @@ export default function DashboardPage() {
   );
 }
 
+/** Searchable bank picker — type to filter, click to select. */
+function BankPicker({
+  banks,
+  loading,
+  value,
+  onChange,
+}: {
+  banks: { name: string; code: string }[];
+  loading: boolean;
+  value: string;
+  onChange: (code: string) => void;
+}) {
+  const selectedName = banks.find((b) => b.code === value)?.name ?? '';
+  const [query, setQuery] = useState(selectedName);
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  // Keep the field showing the selected bank once the list resolves.
+  useEffect(() => {
+    if (selectedName) setQuery(selectedName);
+  }, [selectedName]);
+
+  // Close on outside click.
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q || q === selectedName.toLowerCase()) return banks;
+    return banks.filter((b) => b.name.toLowerCase().includes(q));
+  }, [query, banks, selectedName]);
+
+  return (
+    <div className="flex flex-col gap-2" ref={boxRef}>
+      <label htmlFor="bank" className="text-sm font-semibold text-ink">
+        Bank <span className="text-danger">*</span>
+      </label>
+      <div className="relative">
+        <input
+          id="bank"
+          type="text"
+          autoComplete="off"
+          disabled={loading}
+          value={query}
+          placeholder={loading ? 'Loading banks…' : 'Search your bank'}
+          onFocus={(e) => { setOpen(true); e.target.select(); }}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); if (value) onChange(''); }}
+          className="h-12 w-full rounded-full bg-section px-5 text-sm text-ink placeholder:text-faint transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
+        />
+        {open && !loading && (
+          <ul className="absolute z-10 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-line bg-white py-1 shadow-xl">
+            {filtered.length === 0 ? (
+              <li className="px-4 py-2 text-sm text-faint">No banks match “{query}”.</li>
+            ) : (
+              filtered.map((b) => (
+                <li key={b.code}>
+                  <button
+                    type="button"
+                    onClick={() => { onChange(b.code); setQuery(b.name); setOpen(false); }}
+                    className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-section ${b.code === value ? 'font-semibold text-primary' : 'text-ink'}`}
+                  >
+                    {b.name}
+                    {b.code === value && <Check size={14} />}
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PayoutModal({
   defaults,
   onClose,
@@ -255,6 +334,10 @@ function PayoutModal({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    if (!bankCode) {
+      setError('Please pick your bank from the list.');
+      return;
+    }
     setLoading(true);
     try {
       await api.post('/sales-rep/payouts/request', {
@@ -286,28 +369,12 @@ function PayoutModal({
         </p>
 
         <form onSubmit={submit} className="mt-5 flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="bank" className="text-sm font-semibold text-ink">
-              Bank <span className="text-danger">*</span>
-            </label>
-            <select
-              id="bank"
-              required
-              value={bankCode}
-              onChange={(e) => setBankCode(e.target.value)}
-              disabled={banksLoading}
-              className="h-12 w-full rounded-full bg-section px-5 text-sm text-ink transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-60"
-            >
-              <option value="" disabled>
-                {banksLoading ? 'Loading banks…' : 'Select your bank'}
-              </option>
-              {banks.map((b) => (
-                <option key={b.code} value={b.code}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <BankPicker
+            banks={banks}
+            loading={banksLoading}
+            value={bankCode}
+            onChange={setBankCode}
+          />
           <Input
             label="Account number"
             required
