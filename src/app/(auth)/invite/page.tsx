@@ -71,7 +71,7 @@ function InviteForm() {
       <AuthHeading
         line1="Set your password"
         line2="Get started"
-        subtitle="Create a password to activate your Sales Rep account."
+        subtitle="Create a password to activate your Rep account."
       />
 
       <form onSubmit={handleSubmit} className="mt-12 space-y-5">
