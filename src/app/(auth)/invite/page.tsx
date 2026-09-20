@@ -9,6 +9,7 @@ import { BASE_URL, apiErrorMessage } from '@/lib/api';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { AuthBody, AuthHeading } from '@/components/ui/AuthShell';
+import { policyUrl } from '@/lib/policies';
 import type { LoginResponse } from '@/types';
 
 export default function InvitePage() {
@@ -28,6 +29,7 @@ function InviteForm() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -40,6 +42,10 @@ function InviteForm() {
     }
     if (password !== confirm) {
       setError('Passwords do not match.');
+      return;
+    }
+    if (!agreed) {
+      setError('Please agree to the Rep Agreement, Terms and Privacy Policy to continue.');
       return;
     }
     setLoading(true);
@@ -101,9 +107,24 @@ function InviteForm() {
           autoComplete="new-password"
         />
 
+        <label className="flex items-start gap-2.5 text-xs leading-relaxed text-body">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-line"
+          />
+          <span>
+            I agree to Washermann&apos;s{' '}
+            <a href={policyUrl('rep-agreement')} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">Rep Agreement</a>,{' '}
+            <a href={policyUrl('terms-of-service')} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">Terms of Service</a>, and{' '}
+            <a href={policyUrl('privacy-policy')} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">Privacy Policy</a>.
+          </span>
+        </label>
+
         {error && <p className="text-sm text-danger">{error}</p>}
 
-        <Button type="submit" size="lg" loading={loading} className="w-full">
+        <Button type="submit" size="lg" loading={loading} disabled={!agreed} className="w-full">
           Activate account
         </Button>
       </form>
